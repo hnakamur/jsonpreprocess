@@ -31,6 +31,7 @@ const (
 	itemText
 	itemBlockComment
 	itemLineComment
+	itemWhitespace
 	itemEOF
 )
 
@@ -133,7 +134,15 @@ func lexText(l *lexer) stateFn {
 			}
 			return lexBlockComment
 		}
-		if l.next() == eof {
+
+		r := l.next()
+		if unicode.IsSpace(r) {
+			l.backup()
+			if l.pos > l.start {
+				l.emit(itemText)
+			}
+			return lexWhitespace
+		} else if r == eof {
 			break
 		}
 	}
@@ -169,6 +178,14 @@ func lexString(l *lexer) stateFn {
 			return l.errorf("unclosed string")
 		}
 	}
+}
+
+func lexWhitespace(l *lexer) stateFn {
+	for unicode.IsSpace(l.next()) {
+	}
+	l.backup()
+	l.emit(itemWhitespace)
+	return lexText
 }
 
 func lexLineComment(l *lexer) stateFn {

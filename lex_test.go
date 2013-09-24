@@ -4,27 +4,23 @@ import (
 	"testing"
 )
 
-var itemName = map[itemType]string{
-	itemError:        "error",
-	itemString:       "string",
-	itemText:         "text",
-	itemBlockComment: "blockcomment",
-	itemLineComment:  "linecomment",
-	itemEOF:          "eof",
-}
-
 type lexTest struct {
-    name  string
-    input string
-    items []item
+	name  string
+	input string
+	items []item
 }
 
 var tEOF = item{itemEOF, 0, ""}
 
 var lexTests = []lexTest{
 	{"empty", "", []item{tEOF}},
-	{"spaces", " \t\n", []item{{itemText, 0, " \t\n"}, tEOF}},
-	{"text", `[1, 2]`, []item{{itemText, 0, `[1, 2]`}, tEOF}},
+	{"spaces", " \t\n", []item{{itemWhitespace, 0, " \t\n"}, tEOF}},
+	{"text", `[1, 2]`, []item{
+		{itemText, 0, `[1,`},
+		{itemWhitespace, 0, ` `},
+		{itemText, 0, `2]`},
+		tEOF,
+	}},
 	{"string", `"foo"`, []item{{itemString, 0, `"foo"`}, tEOF}},
 	{"quotation mark escape", `"\""`, []item{{itemString, 0, `"\""`}, tEOF}},
 	{"reverse solidus escape", `"\\"`, []item{{itemString, 0, `"\\"`}, tEOF}},
@@ -50,68 +46,80 @@ var lexTests = []lexTest{
 	{"text with string", `{"foo": 1}`, []item{
 		{itemText, 0, `{`},
 		{itemString, 0, `"foo"`},
-		{itemText, 0, `: 1}`},
+		{itemText, 0, `:`},
+		{itemWhitespace, 0, ` `},
+		{itemText, 0, `1}`},
 		tEOF,
 	}},
 	{"text with line comment ", `[1, 2] // this is a line comment`, []item{
-		{itemText, 0, `[1, 2] `},
+		{itemText, 0, `[1,`},
+		{itemWhitespace, 0, ` `},
+		{itemText, 0, `2]`},
+		{itemWhitespace, 0, ` `},
 		{itemLineComment, 0, `// this is a line comment`},
 		tEOF,
 	}},
 	{"text with block comment ", "[1, 2, /* this is\na block comment */ 3]", []item{
-		{itemText, 0, `[1, 2, `},
+		{itemText, 0, `[1,`},
+		{itemWhitespace, 0, ` `},
+		{itemText, 0, `2,`},
+		{itemWhitespace, 0, ` `},
 		{itemBlockComment, 0, "/* this is\na block comment */"},
-		{itemText, 0, ` 3]`},
+		{itemWhitespace, 0, ` `},
+		{itemText, 0, `3]`},
 		tEOF,
 	}},
 	{"text with string and comment", `{"url": "http://example.com"} // this is a line comment`, []item{
 		{itemText, 0, `{`},
 		{itemString, 0, `"url"`},
-		{itemText, 0, `: `},
+		{itemText, 0, `:`},
+		{itemWhitespace, 0, ` `},
 		{itemString, 0, `"http://example.com"`},
-		{itemText, 0, `} `},
+		{itemText, 0, `}`},
+		{itemWhitespace, 0, ` `},
 		{itemLineComment, 0, `// this is a line comment`},
 		tEOF,
 	}},
 	{"block comment inside stringtext with block comment ",
-	`{"key": "This is a value /* this is a block comment inside a string */"}`, []item{
-		{itemText, 0, `{`},
-		{itemString, 0, `"key"`},
-		{itemText, 0, `: `},
-		{itemString, 0, `"This is a value /* this is a block comment inside a string */"`},
-		{itemText, 0, `}`},
-		tEOF,
-	}},
+		`{"key": "This is a value /* this is a block comment inside a string */"}`, []item{
+			{itemText, 0, `{`},
+			{itemString, 0, `"key"`},
+			{itemText, 0, `:`},
+			{itemWhitespace, 0, ` `},
+			{itemString, 0, `"This is a value /* this is a block comment inside a string */"`},
+			{itemText, 0, `}`},
+			tEOF,
+		}},
 }
 
 func collect(t *lexTest) (items []item) {
-    l := lex(t.input)
-    for {
-        item := l.nextItem()
-        items = append(items, item)
-        if item.typ == itemEOF || item.typ == itemError {
-            break
-        }
-    }
-    return
+	l := lex(t.input)
+	for {
+		item := l.nextItem()
+		items = append(items, item)
+		if item.typ == itemEOF || item.typ == itemError {
+			break
+		}
+	}
+	return
 }
 
 func equal(i1, i2 []item, checkPos bool) bool {
-    if len(i1) != len(i2) {
-        return false
-    }
-    for k := range i1 {
-        if i1[k].typ != i2[k].typ {
-            return false
-        }
-        if i1[k].val != i2[k].val {
-            return false
-        }
-        if checkPos && i1[k].pos != i2[k].pos {
-            return false
-        }
-    }
-    return true
+	if len(i1) != len(i2) {
+		return false
+	}
+	for k := range i1 {
+		if i1[k].typ != i2[k].typ {
+			return false
+		}
+		if i1[k].val != i2[k].val {
+			return false
+		}
+		if checkPos && i1[k].pos != i2[k].pos {
+			return false
+		}
+	}
+	return true
 }
 
 func TestLex(t *testing.T) {

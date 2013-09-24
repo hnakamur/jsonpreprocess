@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"strings"
 )
 
-func WriteUncommentedTo(writer io.Writer, input string) error {
+func WriteMinifiedTo(writer io.Writer, input string) error {
 	l := lex(input)
 	for {
 		switch item := l.nextItem(); item.typ {
@@ -15,15 +14,12 @@ func WriteUncommentedTo(writer io.Writer, input string) error {
 			return nil
 		case itemError:
 			return errors.New(item.val)
+		case itemWhitespace:
+			break
 		case itemBlockComment:
 			break
 		case itemLineComment:
-			if strings.HasSuffix(item.val, "\n") {
-				item.val = "\n"
-			} else {
-				item.val = ""
-			}
-			fallthrough
+			break
 		default:
 			_, err := writer.Write([]byte(item.val))
 			if err != nil {
@@ -33,9 +29,9 @@ func WriteUncommentedTo(writer io.Writer, input string) error {
 	}
 }
 
-func Uncomment(input string) (string, error) {
+func Minify(input string) (string, error) {
 	var out bytes.Buffer
-	err := WriteUncommentedTo(&out, input)
+	err := WriteMinifiedTo(&out, input)
 	if err != nil {
 		return "", err
 	}
