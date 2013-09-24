@@ -1,0 +1,15 @@
+/* response example */
+{
+  "error": false, // true: if error occurred, false: otherwise
+  "count": 23, // item total count
+  "items": [ // items in this page
+    {
+      "id": 1,
+      "name": "John Doe" // user name
+    },
+    {
+      "id": 2,
+      "name": "Paul Smith"
+    }
+  ]
+}
