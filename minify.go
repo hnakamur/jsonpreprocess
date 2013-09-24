@@ -6,8 +6,8 @@ import (
 	"io"
 )
 
-func WriteMinifiedTo(writer io.Writer, input string) error {
-	l := lex(input)
+func WriteMinifiedTo(writer io.Writer, reader io.Reader) error {
+	l := lex(reader)
 	for {
 		switch item := l.nextItem(); item.typ {
 		case itemEOF:
@@ -31,7 +31,8 @@ func WriteMinifiedTo(writer io.Writer, input string) error {
 
 func Minify(input string) (string, error) {
 	var out bytes.Buffer
-	err := WriteMinifiedTo(&out, input)
+	reader := bytes.NewBufferString(input)
+	err := WriteMinifiedTo(&out, reader)
 	if err != nil {
 		return "", err
 	}

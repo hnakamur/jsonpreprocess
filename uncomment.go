@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func WriteUncommentedTo(writer io.Writer, input string) error {
+func WriteUncommentedTo(writer io.Writer, input io.Reader) error {
 	l := lex(input)
 	for {
 		switch item := l.nextItem(); item.typ {
@@ -35,7 +35,8 @@ func WriteUncommentedTo(writer io.Writer, input string) error {
 
 func Uncomment(input string) (string, error) {
 	var out bytes.Buffer
-	err := WriteUncommentedTo(&out, input)
+	reader := bytes.NewBufferString(input)
+	err := WriteUncommentedTo(&out, reader)
 	if err != nil {
 		return "", err
 	}

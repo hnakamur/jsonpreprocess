@@ -1,7 +1,10 @@
 package jsonutil
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -40,7 +43,8 @@ const eof = -1
 type stateFn func(*lexer) stateFn
 
 type lexer struct {
-	input   string
+	input   *bufio.Reader
+	buffer  bytes.Buffer
 	state   stateFn
 	pos     int
 	start   int
@@ -55,9 +59,9 @@ func (l *lexer) nextItem() item {
 	return item
 }
 
-func lex(input string) *lexer {
+func lex(input io.Reader) *lexer {
 	l := &lexer{
-		input: input,
+		input: bufio.NewReader(input),
 		items: make(chan item),
 	}
 	go l.run()
@@ -71,42 +75,81 @@ func (l *lexer) run() {
 }
 
 func (l *lexer) next() rune {
-	if int(l.pos) >= len(l.input) {
+	r, w, err := l.input.ReadRune()
+	if err == io.EOF {
 		l.width = 0
 		return eof
 	}
-	r, w := utf8.DecodeRuneInString(l.input[l.pos:])
 	l.width = w
 	l.pos += w
+	l.buffer.WriteRune(r)
 	return r
 }
 
 func (l *lexer) peek() rune {
-	r := l.next()
-	l.backup()
+	lead, err := l.input.Peek(1)
+	if err == io.EOF {
+		return eof
+	} else if err != nil {
+		panic(err)
+	}
+
+	p, err := l.input.Peek(runeLen(lead[0]))
+	if err == io.EOF {
+		return eof
+	} else if err != nil {
+		panic(err)
+	}
+	r, _ := utf8.DecodeRune(p)
 	return r
 }
 
-func (l *lexer) backup() {
-	l.pos -= l.width
+func runeLen(lead byte) int {
+	if lead >= 0xF0 {
+		return 4
+	} else if lead >= 0xE0 {
+		return 3
+	} else if lead >= 0xC0 {
+		return 2
+	} else {
+		return 1
+	}
 }
 
 func (l *lexer) emit(t itemType) {
-	l.items <- item{t, l.start, l.input[l.start:l.pos]}
+	l.items <- item{t, l.start, l.buffer.String()}
 	l.start = l.pos
+	l.buffer.Truncate(0)
 }
 
 func (l *lexer) accept(valid string) bool {
-	if strings.IndexRune(valid, l.next()) >= 0 {
+	if strings.IndexRune(valid, l.peek()) >= 0 {
+		l.next()
 		return true
 	}
-	l.backup()
 	return false
 }
 
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
 	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...)}
 	return nil
+}
+
+func (l *lexer) hasPrefix(prefix string) bool {
+	p, err := l.input.Peek(len(prefix))
+	if err == io.EOF {
+		return false
+	} else if err != nil {
+		panic(err)
+	}
+	return string(p) == prefix
+}
+
+// Accept next count runes. Normally called after hasPrefix().
+func (l *lexer) nextRuneCount(count int) {
+	for i := 0; i < count; i++ {
+		l.next()
+	}
 }
 
 const (
@@ -118,32 +161,34 @@ const (
 
 func lexText(l *lexer) stateFn {
 	for {
-		if strings.HasPrefix(l.input[l.pos:], doubleQuote) {
+		if l.hasPrefix(doubleQuote) {
 			if l.pos > l.start {
 				l.emit(itemText)
 			}
 			return lexString
-		} else if strings.HasPrefix(l.input[l.pos:], lineComment) {
+		} else if l.hasPrefix(lineComment) {
 			if l.pos > l.start {
 				l.emit(itemText)
 			}
 			return lexLineComment
-		} else if strings.HasPrefix(l.input[l.pos:], leftComment) {
+		} else if l.hasPrefix(leftComment) {
 			if l.pos > l.start {
 				l.emit(itemText)
 			}
 			return lexBlockComment
 		}
 
-		r := l.next()
+		r := l.peek()
 		if unicode.IsSpace(r) {
-			l.backup()
 			if l.pos > l.start {
 				l.emit(itemText)
 			}
 			return lexWhitespace
 		} else if r == eof {
+			l.next()
 			break
+		} else {
+			l.next()
 		}
 	}
 	if l.pos > l.start {
@@ -181,9 +226,9 @@ func lexString(l *lexer) stateFn {
 }
 
 func lexWhitespace(l *lexer) stateFn {
-	for unicode.IsSpace(l.next()) {
+	for unicode.IsSpace(l.peek()) {
+		l.next()
 	}
-	l.backup()
 	l.emit(itemWhitespace)
 	return lexText
 }
@@ -206,8 +251,8 @@ func lexLineComment(l *lexer) stateFn {
 
 func lexBlockComment(l *lexer) stateFn {
 	for {
-		if strings.HasPrefix(l.input[l.pos:], rightComment) {
-			l.pos += len(rightComment)
+		if l.hasPrefix(rightComment) {
+			l.nextRuneCount(utf8.RuneCountInString(rightComment))
 			if l.pos > l.start {
 				l.emit(itemBlockComment)
 			}

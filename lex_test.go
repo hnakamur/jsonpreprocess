@@ -1,6 +1,7 @@
 package jsonutil
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -93,7 +94,8 @@ var lexTests = []lexTest{
 }
 
 func collect(t *lexTest) (items []item) {
-	l := lex(t.input)
+	buf := bytes.NewBufferString(t.input)
+	l := lex(buf)
 	for {
 		item := l.nextItem()
 		items = append(items, item)
