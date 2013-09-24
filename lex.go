@@ -43,19 +43,16 @@ const eof = -1
 type stateFn func(*lexer) stateFn
 
 type lexer struct {
-	input   *bufio.Reader
-	buffer  bytes.Buffer
-	state   stateFn
-	pos     int
-	start   int
-	width   int
-	lastPos int
-	items   chan item
+	input  *bufio.Reader
+	buffer bytes.Buffer
+	state  stateFn
+	pos    int
+	start  int
+	items  chan item
 }
 
 func (l *lexer) nextItem() item {
 	item := <-l.items
-	l.lastPos = item.pos
 	return item
 }
 
@@ -77,10 +74,8 @@ func (l *lexer) run() {
 func (l *lexer) next() rune {
 	r, w, err := l.input.ReadRune()
 	if err == io.EOF {
-		l.width = 0
 		return eof
 	}
-	l.width = w
 	l.pos += w
 	l.buffer.WriteRune(r)
 	return r
