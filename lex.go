@@ -86,14 +86,16 @@ func (l *lexer) peek() rune {
 	if err == io.EOF {
 		return eof
 	} else if err != nil {
-		panic(err)
+		l.errorf("%s", err.Error())
+		return 0
 	}
 
 	p, err := l.input.Peek(runeLen(lead[0]))
 	if err == io.EOF {
 		return eof
 	} else if err != nil {
-		panic(err)
+		l.errorf("%s", err.Error())
+		return 0
 	}
 	r, _ := utf8.DecodeRune(p)
 	return r
@@ -135,7 +137,8 @@ func (l *lexer) hasPrefix(prefix string) bool {
 	if err == io.EOF {
 		return false
 	} else if err != nil {
-		panic(err)
+		l.errorf("%s", err.Error())
+		return false
 	}
 	return string(p) == prefix
 }
