@@ -1,4 +1,4 @@
-jsonutil
-========
+jsonpreprocess
+==============
 
-json utility library written in Go.
+json preprocessor library and tools written in Go.

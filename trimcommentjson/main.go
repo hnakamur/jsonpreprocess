@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"github.com/hnakamur/jsonutil"
+	"github.com/hnakamur/jsonpreprocess"
 )
 
 func main() {
-	err := jsonutil.WriteCommentTrimmedTo(os.Stdout, os.Stdin)
+	err := jsonpreprocess.WriteCommentTrimmedTo(os.Stdout, os.Stdin)
 	if err != nil {
 		panic(err)
 	}

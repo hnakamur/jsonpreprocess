@@ -1,13 +1,13 @@
-package jsonutil
+package jsonpreprocess
 
 import (
 	"testing"
 )
 
 func TestUncomment(t *testing.T) {
-	tests := []struct{
-		name string
-		input string
+	tests := []struct {
+		name     string
+		input    string
 		expected string
 	}{
 		{"empty", ``, ``},
@@ -16,7 +16,7 @@ func TestUncomment(t *testing.T) {
 		{"text with string", `{"foo": 1}`, `{"foo": 1}`},
 		{"text with line comment ",
 			`[1, 2] // this is a line comment`,
-		   	`[1, 2] `},
+			`[1, 2] `},
 		{"text with block comment ",
 			"[1, 2, /* this is\na block comment */ 3]",
 			"[1, 2,  3]"},
