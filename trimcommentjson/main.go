@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	err := jsonutil.WriteUncommentedTo(os.Stdout, os.Stdin)
+	err := jsonutil.WriteCommentTrimmedTo(os.Stdout, os.Stdin)
 	if err != nil {
 		panic(err)
 	}

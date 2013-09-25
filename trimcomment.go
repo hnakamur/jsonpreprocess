@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func WriteUncommentedTo(writer io.Writer, input io.Reader) error {
+func WriteCommentTrimmedTo(writer io.Writer, input io.Reader) error {
 	l := lex(input)
 	for {
 		switch item := l.nextItem(); item.typ {
@@ -33,10 +33,10 @@ func WriteUncommentedTo(writer io.Writer, input io.Reader) error {
 	}
 }
 
-func Uncomment(input string) (string, error) {
+func TrimComment(input string) (string, error) {
 	var out bytes.Buffer
 	reader := bytes.NewBufferString(input)
-	err := WriteUncommentedTo(&out, reader)
+	err := WriteCommentTrimmedTo(&out, reader)
 	if err != nil {
 		return "", err
 	}
