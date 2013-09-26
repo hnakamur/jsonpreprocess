@@ -119,6 +119,14 @@ var lexTests = []lexTest{
 		{itemRightBrace, 0, `}`},
 		tEOF,
 	}},
+	{"number zero", `0`, []item{{itemNumber, 0, `0`}, tEOF}},
+	{"fraction number with zero integer part", `0.12`, []item{{itemNumber, 0, `0.12`}, tEOF}},
+	{"negative number", `-0.12`, []item{{itemNumber, 0, `-0.12`}, tEOF}},
+	{"fraction number with non-zero integer part", `10.12`, []item{{itemNumber, 0, `10.12`}, tEOF}},
+	{"number with no-sign exponent", `1e2`, []item{{itemNumber, 0, `1e2`}, tEOF}},
+	{"number with minus exponent", `1e-2`, []item{{itemNumber, 0, `1e-2`}, tEOF}},
+	{"number with plus exponent", `1E+99`, []item{{itemNumber, 0, `1E+99`}, tEOF}},
+	{"number with fraction and plus exponent", `1.23E+99`, []item{{itemNumber, 0, `1.23E+99`}, tEOF}},
 }
 
 func collect(t *lexTest) (items []item) {
