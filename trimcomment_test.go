@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestUncomment(t *testing.T) {
+func TestTrimComment(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -25,7 +25,7 @@ func TestUncomment(t *testing.T) {
 			`{"url": "http://example.com"} `},
 	}
 	for _, test := range tests {
-		actual, err := Uncomment(test.input)
+		actual, err := TrimComment(test.input)
 		if err != nil {
 			t.Fatal(err)
 		}
