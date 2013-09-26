@@ -216,16 +216,10 @@ const (
 func lexText(l *lexer) stateFn {
 Loop:
 	for {
-		if l.hasPrefix(doubleQuote) {
-			return lexString
-		} else if l.hasPrefix(lineComment) {
-			return lexLineComment
-		} else if l.hasPrefix(leftComment) {
-			return lexBlockComment
-		}
-
 		r := l.peek()
 		switch r {
+		case '"':
+			return lexString
 		case ':':
 			l.next()
 			l.emit(itemColon)
@@ -244,6 +238,14 @@ Loop:
 		case ']':
 			l.next()
 			l.emit(itemRightBracket)
+		case '/':
+			if l.hasPrefix(lineComment) {
+				return lexLineComment
+			} else if l.hasPrefix(leftComment) {
+				return lexBlockComment
+			} else {
+				return l.errorf("invalid character after slash")
+			}
 		default:
 			if unicode.IsSpace(r) {
 				return lexWhitespace
