@@ -102,14 +102,14 @@ func (l *lexer) peek() rune {
 }
 
 func runeLen(lead byte) int {
-	if lead >= 0xF0 {
-		return 4
-	} else if lead >= 0xE0 {
-		return 3
-	} else if lead >= 0xC0 {
-		return 2
-	} else {
+	if lead < 0xC0 {
 		return 1
+	} else if lead < 0xE0 {
+		return 2
+	} else if lead < 0xF0 {
+		return 3
+	} else {
+		return 4
 	}
 }
 
