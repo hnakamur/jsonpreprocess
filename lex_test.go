@@ -110,6 +110,15 @@ var lexTests = []lexTest{
 		{itemRightBrace, 0, `}`},
 		tEOF,
 	}},
+	{"loose json with identifier key contains keyword", `{truey: true}`, []item{
+		{itemLeftBrace, 0, `{`},
+		{itemIdentifier, 0, `truey`},
+		{itemColon, 0, `:`},
+		{itemWhitespace, 0, ` `},
+		{itemTrue, 0, `true`},
+		{itemRightBrace, 0, `}`},
+		tEOF,
+	}},
 }
 
 func collect(t *lexTest) (items []item) {
