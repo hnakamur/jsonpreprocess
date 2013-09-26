@@ -15,11 +15,11 @@ This preprocessor can do:
 This preprocessor accepts two style of comments.
 
 - line comment:
-    from // to the end of line.
-    example: // this is a comment
+    from ```//``` to the end of line.
+    example: ```// this is a comment```
 - block comment:
-    from /* to */. block comments cannot be nested.
-    example: /* this is a comment */
+    from ```/*``` to ```*/```. block comments cannot be nested.
+    example: ```/* this is a comment */```
 
 
 example input
