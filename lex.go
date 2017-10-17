@@ -264,7 +264,7 @@ Loop:
 }
 
 const (
-	hexdigit  = "0123456789ABDEFabcdef"
+	hexdigit  = "0123456789ABCDEFabcdef"
 	digit     = "0123456789"
 	digit1To9 = "123456789"
 )
