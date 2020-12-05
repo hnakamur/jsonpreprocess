@@ -238,6 +238,8 @@ Loop:
 		case ']':
 			l.next()
 			l.emit(itemRightBracket)
+		case '#':
+			return lexLineComment
 		case '/':
 			if l.hasPrefix(lineComment) {
 				return lexLineComment
